@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f2">
+  <title>Estufa Clara — protótipos de painel</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --ink: #1d2d24;
+      --muted: #647168;
+      --line: #e2e8df;
+      --canvas: #f5f7f2;
+      --surface: #fff;
+      --green: #26734c;
+      --green-soft: #e8f3e8;
+      --red: #a83e31;
+      --red-soft: #fff0ec;
+      --amber: #805313;
+      --amber-soft: #fff4d9;
+      --shadow: 0 14px 40px rgb(27 47 32 / 7%);
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #edf1eb; color: var(--ink); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 3px solid #2874cc;
+      outline-offset: 3px;
+    }
+    .skip-link {
+      position: fixed; z-index: 30; top: 8px; left: 8px; padding: 10px 14px;
+      transform: translateY(-160%); border-radius: 8px; background: #fff; color: #14221a;
+    }
+    .skip-link:focus { transform: none; }
+    .prototype-picker {
+      position: sticky; z-index: 10; top: 0; display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; padding: 13px max(24px, calc((100vw - 1440px) / 2)); color: #f4f8f1;
+      background: #1c2e24; box-shadow: 0 4px 18px rgb(19 35 25 / 20%);
+    }
+    .picker-title { display: flex; align-items: center; gap: 12px; min-width: 190px; }
+    .picker-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: #355e43; font-size: 18px; }
+    .picker-title strong { display: block; font-size: 13px; letter-spacing: .02em; }
+    .picker-title span { display: block; margin-top: 2px; color: #b9c9bc; font-size: 11px; }
+    .picker-tabs { display: flex; gap: 5px; padding: 4px; border: 1px solid #506253; border-radius: 12px; background: #253a2d; }
+    .picker-tabs button {
+      padding: 8px 13px; border: 0; border-radius: 8px; background: transparent; color: #d4dfd5;
+      font-size: 12px; font-weight: 650; white-space: nowrap;
+    }
+    .picker-tabs button[aria-pressed="true"] { background: #f3f6ef; color: #21342a; box-shadow: 0 1px 4px #17251b66; }
+    .picker-note { color: #bdcbbf; font-size: 11px; text-align: right; }
+    .prototype { min-height: calc(100vh - 61px); padding: 34px 24px 52px; }
+    .prototype[hidden] { display: none; }
+    .frame { width: min(1260px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .page-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin: 6px 0 24px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 7px; font-size: clamp(25px, 3vw, 34px); letter-spacing: -.045em; line-height: 1.12; }
+    .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+    .quiet-button, .primary-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 9px 14px;
+      border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink);
+      font-size: 12px; font-weight: 700;
+    }
+    .quiet-button:hover { background: #f7faf6; border-color: #b7c5b6; }
+    .primary-button { border-color: #246a43; background: #246a43; color: white; }
+    .primary-button:hover { background: #1d5737; }
+    .simulated {
+      display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #e7d69e;
+      border-radius: 999px; background: #fff8e5; color: #664917; font-size: 11px; font-weight: 750;
+    }
+    .simulated::before { width: 7px; height: 7px; border-radius: 50%; background: #ad7619; content: ""; }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+    .metric-card { position: relative; overflow: hidden; padding: 21px 22px 19px; }
+    .metric-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .metric-label { display: flex; align-items: center; gap: 9px; color: #526057; font-size: 12px; font-weight: 700; }
+    .metric-icon { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 10px; background: #edf5ed; font-size: 16px; }
+    .metric-reading { display: flex; align-items: baseline; gap: 7px; margin: 15px 0 7px; }
+    .metric-value { font-size: clamp(37px, 5vw, 49px); font-weight: 720; letter-spacing: -.065em; line-height: 1; }
+    .metric-unit { color: #738077; font-size: 15px; font-weight: 600; }
+    .metric-detail { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #6b786e; font-size: 11px; }
+    .status-tag { display: inline-flex; align-items: center; gap: 6px; color: #8e3b2f; font-weight: 750; }
+    .status-tag::before { width: 7px; height: 7px; border-radius: 50%; background: #b44938; content: ""; }
+    .status-ok { color: #286044; }
+    .status-ok::before { background: #317653; }
+    .alert-card { display: flex; align-items: flex-start; gap: 13px; padding: 17px 19px; border: 1px solid #efd0c5; border-radius: 14px; background: #fff8f5; }
+    .alert-card[hidden] { display: none; }
+    .alert-symbol { display: grid; flex: 0 0 31px; height: 31px; place-items: center; border-radius: 50%; background: #f9e4dc; color: #9a392c; font-weight: 900; }
+    .alert-card h2 { margin: 1px 0 4px; font-size: 13px; }
+    .alert-card p { margin: 0; color: #704a43; font-size: 12px; line-height: 1.55; }
+    .alert-meta { margin-left: auto; color: #7c655f; font-size: 11px; white-space: nowrap; }
+    .section-card { padding: 20px 21px; }
+    .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .section-heading h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: -.015em; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+    .period-tabs { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: #f7f9f6; }
+    .period-tabs button { min-width: 38px; padding: 6px 9px; border: 0; border-radius: 6px; background: transparent; color: #657167; font-size: 10px; font-weight: 700; }
+    .period-tabs button[aria-pressed="true"] { background: #fff; color: #1f5c3c; box-shadow: 0 1px 3px #1d342222; }
+    .chart-wrap { position: relative; width: 100%; height: 205px; }
+    .chart-wrap svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .chart-legend { display: flex; gap: 17px; color: #5e6b62; font-size: 10px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-line { width: 16px; height: 3px; border-radius: 2px; background: #39825b; }
+    .legend-line.humidity { background: #5795b2; }
+    .limits-panel { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+    .limits-panel strong { display: block; margin-bottom: 4px; font-size: 12px; }
+    .limits-panel p { margin: 0; color: var(--muted); font-size: 11px; }
+    .bottom-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(245px, .8fr); gap: 16px; margin-top: 16px; }
+    .freshness { color: #617067; font-size: 11px; }
+    .freshness strong { color: #334238; }
+    .footnote { margin: 20px 2px 0; color: #748078; font-size: 10px; line-height: 1.6; }
+    .alert-focus-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(230px, .8fr); gap: 14px; margin-bottom: 17px; }
+    .alert-focus-grid .alert-card { min-height: 142px; align-items: flex-start; flex-direction: column; justify-content: center; }
+    .alert-focus-grid .alert-card > div:nth-child(2) { max-width: 440px; }
+    .recent-list { padding: 18px 19px; }
+    .recent-list h2 { margin: 0 0 13px; font-size: 13px; }
+    .recent-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .recent-row strong { color: var(--ink); }
+    .chart-data { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; color: var(--muted); font-size: 11px; }
+    .chart-data summary { width: fit-content; cursor: pointer; color: var(--green); font-weight: 700; }
+    .chart-data table { width: 100%; margin-top: 10px; border-collapse: collapse; text-align: left; }
+    .chart-data th, .chart-data td { padding: 7px 9px; border-bottom: 1px solid var(--line); }
+    .chart-data th { color: var(--ink); }
+
+    /* Concept 2: editorial, analytical workspace. */
+    #concept-2 { background: #faf9f5; --ink: #2d332e; --muted: #74776e; --line: #e8e5db; --green: #3c6550; --canvas: #faf9f5; --surface: #fffefa; --shadow: 0 8px 24px rgb(60 52 37 / 4%); }
+    #concept-2 .frame { width: min(1120px, 100%); }
+    #concept-2 .topline { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 22px; border-bottom: 1px solid #dfded5; }
+    #concept-2 .brand { display: flex; align-items: center; gap: 11px; font-family: Georgia, "Times New Roman", serif; font-size: 19px; }
+    #concept-2 .brand-mark { color: #3c6550; font-size: 23px; }
+    #concept-2 .top-nav { display: flex; gap: 19px; color: #77796f; font-size: 11px; }
+    #concept-2 .top-nav span:first-child { color: #3c6550; font-weight: 800; }
+    #concept-2 .page-heading { margin: 29px 0 24px; }
+    #concept-2 h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.035em; }
+    #concept-2 .eyebrow { color: #61775d; }
+    #concept-2 .metric-card { border-radius: 4px; box-shadow: none; }
+    #concept-2 .metric-icon { border-radius: 50%; background: #eff1e9; }
+    #concept-2 .alert-card { border-radius: 4px; border-left: 4px solid #a84a35; background: #fff7f2; }
+    #concept-2 .card { box-shadow: none; }
+    #concept-2 .section-card { border-radius: 4px; }
+    #concept-2 .limits-panel { border-top: 1px solid #e8e5db; padding-top: 15px; }
+    #concept-2 .metric-value { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+    #concept-2 .simulated { border-radius: 4px; }
+    #concept-2 .alert-focus-grid { grid-template-columns: minmax(0, 1.5fr) minmax(260px, .7fr); }
+    #concept-2 .alert-focus-grid .alert-card { padding: 25px; }
+    #concept-2 .alert-focus-grid .alert-card h2 { font-family: Georgia, "Times New Roman", serif; font-size: 19px; }
+    #concept-2 .recent-list { border-radius: 4px; box-shadow: none; }
+    #concept-2 .metric-card { padding: 14px 17px; }
+    #concept-2 .metric-reading { margin: 8px 0 5px; }
+    #concept-2 .metric-value { font-size: 36px; }
+    #concept-2 .metric-icon { width: 27px; height: 27px; }
+    #concept-2 .chart-wrap { height: 160px; }
+    #concept-2 .bottom-grid { grid-template-columns: 1fr; }
+
+    /* Concept 3: dark, information-dense operations console. */
+    #concept-3 { background: #111b18; color: #e7efe9; --ink: #e7efe9; --muted: #a8b8ac; --line: #31423a; --green: #83c797; --green-soft: #20382c; --surface: #1a2822; --canvas: #111b18; --red-soft: #3a2925; --shadow: 0 10px 30px rgb(0 0 0 / 16%); }
+    #concept-3 .frame { width: min(1320px, 100%); }
+    #concept-3 .eyebrow { color: #91c99e; }
+    #concept-3 .subtitle, #concept-3 .metric-detail, #concept-3 .freshness, #concept-3 .footnote { color: #a8b8ac; }
+    #concept-3 .quiet-button { border-color: #43584b; background: #1b2b23; color: #e6efe8; }
+    #concept-3 .quiet-button:hover { background: #24382c; }
+    #concept-3 .metric-card { border-radius: 10px; }
+    #concept-3 .metric-label { color: #b4c4b8; }
+    #concept-3 .metric-icon { background: #263c2e; }
+    #concept-3 .metric-value { color: #f1f6f1; }
+    #concept-3 .metric-unit { color: #a8b8ac; }
+    #concept-3 .alert-card { border-color: #704238; background: #342722; }
+    #concept-3 .alert-symbol { background: #53342c; color: #ffb8a4; }
+    #concept-3 .alert-card h2 { color: #ffe2d7; }
+    #concept-3 .alert-card p, #concept-3 .alert-meta { color: #d8b6a9; }
+    #concept-3 .status-tag { color: #ffb8a4; }
+    #concept-3 .status-ok { color: #a9dfb5; }
+    #concept-3 .section-card { border-radius: 10px; }
+    #concept-3 .section-heading p { color: #a8b8ac; }
+    #concept-3 .period-tabs { border-color: #43584b; background: #15221c; }
+    #concept-3 .period-tabs button { color: #b1c0b5; }
+    #concept-3 .period-tabs button[aria-pressed="true"] { background: #355642; color: white; box-shadow: none; }
+    #concept-3 .limits-panel p { color: #a8b8ac; }
+    #concept-3 .simulated { border-color: #79643c; background: #382f1e; color: #f2d38e; }
+    #concept-3 .freshness strong { color: #e1ebe3; }
+    #concept-3 .chart-wrap { height: 265px; }
+    #concept-3 .bottom-grid { grid-template-columns: 1fr; margin-top: 14px; }
+    #concept-3 .metric-card { padding: 15px 19px; }
+    #concept-3 .metric-reading { margin: 9px 0 7px; }
+    #concept-3 .metric-value { font-size: 38px; }
+    #concept-3 .alert-focus-grid { grid-template-columns: minmax(0, 1fr) auto; }
+    #concept-3 .chart-data { border-color: #34483d; }
+    #concept-3 .chart-data th, #concept-3 .chart-data td { border-color: #34483d; }
+    #concept-3 .frame { display: flex; flex-direction: column; }
+    #concept-3 .page-heading { order: 1; }
+    #concept-3 .bottom-grid { order: 2; }
+    #concept-3 .cards { order: 3; }
+    #concept-3 > .frame > .alert-card { order: 4; }
+    #concept-3 .frame > .footnote { order: 5; }
+
+    dialog { width: min(430px, calc(100% - 32px)); padding: 0; border: 1px solid #dce3da; border-radius: 16px; color: #1d2d24; box-shadow: 0 24px 90px #101b1480; }
+    dialog::backdrop { background: rgb(18 29 22 / 58%); }
+    .dialog-content { padding: 23px; }
+    .dialog-header { display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; margin-bottom: 19px; }
+    .dialog-header h2 { margin: 0 0 5px; font-size: 19px; }
+    .dialog-header p { margin: 0; color: #647168; font-size: 12px; line-height: 1.5; }
+    .close-button { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #e1e7df; border-radius: 8px; background: #fff; color: #314238; font-size: 18px; }
+    .limit-fields { display: grid; gap: 16px; }
+    .field-group { padding: 13px; border: 1px solid #e2e8df; border-radius: 10px; }
+    .field-group legend { padding: 0 4px; color: #375844; font-size: 12px; font-weight: 750; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-row label { display: grid; gap: 6px; color: #56645a; font-size: 11px; font-weight: 650; }
+    .field-row input { width: 100%; padding: 9px 10px; border: 1px solid #cbd5ca; border-radius: 7px; background: white; color: #1d2d24; }
+    .form-error { min-height: 17px; margin: 9px 0 0; color: #a83e31; font-size: 11px; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
+    .toast { position: fixed; z-index: 20; right: 22px; bottom: 22px; max-width: min(370px, calc(100vw - 44px)); padding: 13px 17px; border: 1px solid #b8d3be; border-radius: 10px; background: #eff8ef; color: #244e34; box-shadow: 0 12px 32px #1b322a2e; font-size: 12px; font-weight: 700; }
+    .toast[hidden] { display: none; }
+
+    @media (max-width: 760px) {
+      .prototype-picker { align-items: flex-start; flex-direction: column; gap: 11px; padding: 11px 16px; }
+      .picker-note { display: none; }
+      .picker-tabs { width: 100%; }
+      .picker-tabs button { flex: 1; padding-inline: 7px; }
+      .prototype { padding: 25px 15px 38px; }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 15px; }
+      .page-heading .simulated { align-self: flex-start; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .alert-focus-grid { grid-template-columns: 1fr; }
+      .alert-meta { display: none; }
+      #concept-2 .top-nav { gap: 10px; font-size: 10px; }
+    }
+    @media (max-width: 520px) {
+      .cards { grid-template-columns: 1fr; gap: 11px; }
+      .metric-card { padding: 17px; }
+      .section-card { padding: 16px 14px; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .chart-wrap { height: 175px; }
+      #concept-2 .top-nav span:nth-child(n+2) { display: none; }
+      .quiet-button { min-height: 38px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .prototype { animation: appear .24s ease-out; }
+      @keyframes appear { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Pular para o painel</a>
+  <header class="prototype-picker" aria-label="Seletor de conceitos de interface">
+    <div class="picker-title">
+      <div class="picker-mark" aria-hidden="true">✳</div>
+      <div><strong>Estufa Clara</strong><span>Exploração de interface · MVP</span></div>
+    </div>
+    <nav class="picker-tabs" aria-label="Escolha um conceito">
+      <button type="button" id="tab-1" aria-controls="concept-1" aria-pressed="true">01 · Essencial</button>
+      <button type="button" id="tab-2" aria-controls="concept-2" aria-pressed="false">02 · Alertas</button>
+      <button type="button" id="tab-3" aria-controls="concept-3" aria-pressed="false">03 · Histórico</button>
+    </nav>
+    <div class="picker-note">Protótipos comparativos<br>Todos os dados são demonstrativos</div>
+  </header>
+
+  <main id="main-content">
+    <section class="prototype" id="concept-1" aria-labelledby="heading-1">
+      <div class="frame">
+        <div class="eyebrow">Painel da estufa · Conceito 01</div>
+        <div class="page-heading">
+          <div><h1 id="heading-1">Bom dia, sua estufa</h1><p class="subtitle">Tomate e pimentão <span aria-hidden="true">·</span> Última leitura hoje, 09:00</p></div>
+          <span class="simulated">Dados simulados</span>
+        </div>
+        <div class="cards" aria-label="Leituras ambientais atuais">
+          <article class="card metric-card" data-measure="temperature">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">☼</span> Temperatura do ar</div><span class="status-tag status-ok" data-status="temperature">Dentro da faixa</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="temperature">27,4</span><span class="metric-unit">°C</span></div>
+            <div class="metric-detail"><span>Limites configurados: <span data-limits="temperature">18–30 °C</span></span><span>Às 09:00</span></div>
+          </article>
+          <article class="card metric-card" data-measure="humidity">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">◌</span> Umidade do ar</div><span class="status-tag" data-status="humidity">Acima do limite</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="humidity">71</span><span class="metric-unit">%</span></div>
+            <div class="metric-detail"><span>Limites configurados: <span data-limits="humidity">50–70 %</span></span><span>Às 09:00</span></div>
+          </article>
+        </div>
+        <section class="alert-card" aria-labelledby="alert-title-1" aria-live="polite" style="margin-top:16px">
+          <div class="alert-symbol" aria-hidden="true">!</div>
+          <div><h2 id="alert-title-1">Umidade acima do limite configurado</h2><p>A leitura de <strong>71%</strong> ultrapassou o máximo de <strong>70%</strong>. O alerta se refere à medição das 09:00.</p></div>
+          <span class="alert-meta">Hoje · 09:00</span>
+        </section>
+        <div class="bottom-grid">
+          <section class="card section-card" aria-labelledby="chart-title-1">
+            <div class="section-heading"><div><h2 id="chart-title-1">Histórico ambiental</h2><p>Tendência das últimas medições · dados de demonstração</p></div><div class="period-tabs" role="group" aria-label="Período do gráfico"><button type="button" aria-pressed="false">24h</button><button type="button" aria-pressed="true">7d</button><button type="button" aria-pressed="false">30d</button><button type="button" aria-pressed="false">90d</button><button type="button" aria-pressed="false">1 ano</button></div></div>
+            <div class="chart-wrap" data-chart aria-label="Gráfico demonstrativo de temperatura e umidade nos últimos sete dias">
+              <svg viewBox="0 0 730 205" role="img" aria-labelledby="chart-svg-title-1 chart-svg-desc-1">
+                <title id="chart-svg-title-1">Tendência de temperatura e umidade</title><desc id="chart-svg-desc-1">Linhas simuladas ao longo de sete dias. A escala da esquerda é temperatura em graus Celsius; a da direita é umidade relativa em porcentagem.</desc>
+                <g stroke="#e7ece5" stroke-width="1"><path d="M45 25H685M45 65H685M45 105H685M45 145H685M45 185H685"/></g>
+                <g fill="#758078" font-size="10" font-family="system-ui"><text x="4" y="28">32°</text><text x="4" y="68">28°</text><text x="4" y="108">24°</text><text x="4" y="148">20°</text><text x="4" y="188">16°</text><text x="47" y="202">Seg</text><text x="150" y="202">Ter</text><text x="255" y="202">Qua</text><text x="360" y="202">Qui</text><text x="465" y="202">Sex</text><text x="570" y="202">Sáb</text><text x="665" y="202">Dom</text></g>
+                <g fill="#5795b2" font-size="10" font-family="system-ui"><text x="690" y="28">100%</text><text x="690" y="68">80%</text><text x="690" y="108">60%</text><text x="690" y="148">40%</text><text x="690" y="188">20%</text></g>
+                <path d="M50 109 C93 94 111 110 151 83 S215 75 258 92 S324 55 365 68 S430 95 470 61 S535 72 578 50 S640 74 680 48" fill="none" stroke="#39825b" stroke-width="3" stroke-linecap="round"/>
+                <path d="M50 141 C89 134 111 149 151 126 S215 132 258 114 S323 126 365 101 S428 121 470 107 S535 117 578 90 S640 102 680 81" fill="none" stroke="#5795b2" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="680" cy="48" r="4" fill="#39825b"/><circle cx="680" cy="81" r="4" fill="#5795b2"/>
+              </svg>
+            </div>
+            <div class="chart-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Temperatura (°C)</span><span class="legend-item"><i class="legend-line humidity"></i>Umidade (%)</span></div>
+            <details class="chart-data"><summary>Consultar exemplo de leituras em tabela</summary><p>Valores demonstrativos — não representam medições reais.</p><table><thead><tr><th scope="col">Horário</th><th scope="col">Temperatura</th><th scope="col">Umidade</th></tr></thead><tbody><tr><th scope="row">08:00</th><td>26,8 °C</td><td>68 %</td></tr><tr><th scope="row">09:00</th><td>27,4 °C</td><td>71 %</td></tr></tbody></table></details>
+          </section>
+          <section class="card section-card" aria-labelledby="limits-title-1">
+            <div class="section-heading"><div><h2 id="limits-title-1">Seus limites</h2><p>Defina quando deseja ser alertado.</p></div></div>
+            <div class="limits-panel"><div><strong>Faixas de alerta</strong><p>Configuradas pelo operador</p></div><button type="button" class="quiet-button" data-open-settings>Configurar limites</button></div>
+            <p class="footnote">Leituras atualizadas aproximadamente a cada hora. Os alertas podem levar até uma hora para aparecer.</p>
+          </section>
+        </div>
+        <p class="footnote freshness"><strong>Fonte dos dados:</strong> simulação para avaliação da interface. Nenhum equipamento está conectado ou é controlado por este protótipo.</p>
+      </div>
+    </section>
+
+    <section class="prototype" id="concept-2" aria-labelledby="heading-2" hidden>
+      <div class="frame">
+        <div class="topline"><div class="brand"><span class="brand-mark" aria-hidden="true">✳</span> Estufa Clara</div><div class="top-nav" aria-hidden="true"><span>VISÃO GERAL</span><span>ALERTAS</span><span>HISTÓRICO</span></div><span class="simulated">Demonstração</span></div>
+        <div class="page-heading">
+          <div><div class="eyebrow">Terça-feira, 13 de outubro · 09:00</div><h1 id="heading-2">Acompanhe o ritmo<br>da sua estufa.</h1><p class="subtitle">Tomate e pimentão · uma leitura horária, sem automação de equipamentos.</p></div>
+          <button type="button" class="quiet-button" data-open-settings>⚙ <span>Faixas de alerta</span></button>
+        </div>
+        <div class="alert-focus-grid">
+          <section class="alert-card" aria-labelledby="alert-title-2" aria-live="polite">
+            <div class="alert-symbol" aria-hidden="true">!</div><div><h2 id="alert-title-2">Umidade fora da faixa definida</h2><p>71% registrado às 09:00 · limite máximo configurado: 70%.</p></div><span class="alert-meta">ATIVO · HOJE 09:00</span>
+          </section>
+          <section class="card recent-list" aria-labelledby="recent-title-2">
+            <h2 id="recent-title-2">Atividade recente</h2>
+            <div class="recent-row"><span><strong>09:00</strong> · Umidade acima do limite</span><span>Ativo</span></div>
+            <div class="recent-row"><span><strong>08:00</strong> · Temperatura dentro da faixa</span><span>Normal</span></div>
+            <div class="recent-row"><span><strong>07:00</strong> · Temperatura dentro da faixa</span><span>Normal</span></div>
+          </section>
+        </div>
+        <div class="cards" aria-label="Leituras ambientais atuais">
+          <article class="card metric-card" data-measure="temperature">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">☼</span> Temperatura do ar</div><span class="status-tag status-ok" data-status="temperature">Dentro da faixa</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="temperature">27,4</span><span class="metric-unit">°C</span></div>
+            <div class="metric-detail"><span>Faixa de alerta <span data-limits="temperature">18–30 °C</span></span><span>Leitura · 09:00</span></div>
+          </article>
+          <article class="card metric-card" data-measure="humidity">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">◌</span> Umidade relativa</div><span class="status-tag" data-status="humidity">Acima do limite</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="humidity">71</span><span class="metric-unit">%</span></div>
+            <div class="metric-detail"><span>Faixa de alerta <span data-limits="humidity">50–70 %</span></span><span>Leitura · 09:00</span></div>
+          </article>
+        </div>
+        <section class="card section-card" aria-labelledby="chart-title-2" style="margin-top:17px">
+          <div class="section-heading"><div><h2 id="chart-title-2">Histórico relacionado</h2><p>Consulte tendências para investigar períodos com alertas.</p></div><div class="period-tabs" role="group" aria-label="Período do gráfico"><button type="button" aria-pressed="false">24h</button><button type="button" aria-pressed="true">7d</button><button type="button" aria-pressed="false">30d</button><button type="button" aria-pressed="false">90d</button><button type="button" aria-pressed="false">1 ano</button></div></div>
+          <div class="chart-wrap" data-chart aria-label="Gráfico demonstrativo de temperatura e umidade nos últimos sete dias">
+            <svg viewBox="0 0 730 205" role="img" aria-labelledby="chart-svg-title-2 chart-svg-desc-2">
+              <title id="chart-svg-title-2">Histórico demonstrativo da estufa</title><desc id="chart-svg-desc-2">Variação simulada de temperatura e umidade em sete dias. A escala da esquerda é temperatura em graus Celsius; a da direita é umidade relativa em porcentagem.</desc>
+              <g stroke="#eae8df" stroke-width="1"><path d="M45 25H685M45 65H685M45 105H685M45 145H685M45 185H685"/></g>
+              <g fill="#85867e" font-size="10" font-family="system-ui"><text x="4" y="28">32°</text><text x="4" y="68">28°</text><text x="4" y="108">24°</text><text x="4" y="148">20°</text><text x="4" y="188">16°</text><text x="47" y="202">Seg</text><text x="150" y="202">Ter</text><text x="255" y="202">Qua</text><text x="360" y="202">Qui</text><text x="465" y="202">Sex</text><text x="570" y="202">Sáb</text><text x="665" y="202">Dom</text></g>
+              <g fill="#5a91a5" font-size="10" font-family="system-ui"><text x="690" y="28">100%</text><text x="690" y="68">80%</text><text x="690" y="108">60%</text><text x="690" y="148">40%</text><text x="690" y="188">20%</text></g>
+              <path d="M50 109 C93 94 111 110 151 83 S215 75 258 92 S324 55 365 68 S430 95 470 61 S535 72 578 50 S640 74 680 48" fill="none" stroke="#3d7651" stroke-width="3" stroke-linecap="round"/>
+              <path d="M50 141 C89 134 111 149 151 126 S215 132 258 114 S323 126 365 101 S428 121 470 107 S535 117 578 90 S640 102 680 81" fill="none" stroke="#5a91a5" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="680" cy="48" r="4" fill="#3d7651"/><circle cx="680" cy="81" r="4" fill="#5a91a5"/>
+            </svg>
+          </div>
+          <div class="chart-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Temperatura (°C)</span><span class="legend-item"><i class="legend-line humidity"></i>Umidade relativa (%)</span></div>
+          <details class="chart-data"><summary>Consultar exemplo de leituras em tabela</summary><p>Valores demonstrativos — não representam medições reais.</p><table><thead><tr><th scope="col">Horário</th><th scope="col">Temperatura</th><th scope="col">Umidade</th></tr></thead><tbody><tr><th scope="row">08:00</th><td>26,8 °C</td><td>68 %</td></tr><tr><th scope="row">09:00</th><td>27,4 °C</td><td>71 %</td></tr></tbody></table></details>
+        </section>
+        <p class="footnote">Conceito editorial: foco em tendências e leitura calma dos dados. As faixas são definidas pelo operador, não recomendações agronômicas.</p>
+      </div>
+    </section>
+
+    <section class="prototype" id="concept-3" aria-labelledby="heading-3" hidden>
+      <div class="frame">
+        <div class="page-heading">
+          <div><div class="eyebrow">ESTUFA / UNIDADE 01 · TERÇA, 13 OUT 2026</div><h1 id="heading-3">Central de monitoramento</h1><p class="subtitle">Tomate + pimentão <span aria-hidden="true">/</span> estado do sistema: dados de demonstração</p></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="simulated">MODO SIMULAÇÃO</span><button type="button" class="quiet-button" data-open-settings>Configurar limites</button></div>
+        </div>
+        <div class="cards" aria-label="Leituras ambientais atuais">
+          <article class="card metric-card" data-measure="temperature">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">☼</span> TEMPERATURA DO AR</div><span class="status-tag status-ok" data-status="temperature">Dentro da faixa</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="temperature">27,4</span><span class="metric-unit">°C</span></div>
+            <div class="metric-detail"><span>LIMITE <span data-limits="temperature">18–30 °C</span></span><span>ÚLTIMA LEITURA · 09:00</span></div>
+          </article>
+          <article class="card metric-card" data-measure="humidity">
+            <div class="metric-top"><div class="metric-label"><span class="metric-icon" aria-hidden="true">◌</span> UMIDADE RELATIVA</div><span class="status-tag" data-status="humidity">Acima do limite</span></div>
+            <div class="metric-reading"><span class="metric-value" data-value="humidity">71</span><span class="metric-unit">%</span></div>
+            <div class="metric-detail"><span>LIMITE <span data-limits="humidity">50–70 %</span></span><span>ÚLTIMA LEITURA · 09:00</span></div>
+          </article>
+        </div>
+        <section class="alert-card" aria-labelledby="alert-title-3" aria-live="polite" style="margin-top:15px">
+          <div class="alert-symbol" aria-hidden="true">!</div><div><h2 id="alert-title-3">ALERTA · UMIDADE ACIMA DO LIMITE</h2><p>Valor 71% · máximo configurado 70% · medição às 09:00. Este painel não controla equipamentos.</p></div><span class="alert-meta">ATIVO</span>
+        </section>
+        <div class="bottom-grid">
+          <section class="card section-card" aria-labelledby="chart-title-3">
+            <div class="section-heading"><div><h2 id="chart-title-3">Série temporal</h2><p>Leituras ambientais simuladas · atualização horária</p></div><div class="period-tabs" role="group" aria-label="Período do gráfico"><button type="button" aria-pressed="false">24h</button><button type="button" aria-pressed="true">7d</button><button type="button" aria-pressed="false">30d</button><button type="button" aria-pressed="false">90d</button><button type="button" aria-pressed="false">1 ano</button></div></div>
+            <div class="chart-wrap" data-chart aria-label="Gráfico demonstrativo de temperatura e umidade nos últimos sete dias">
+              <svg viewBox="0 0 730 205" role="img" aria-labelledby="chart-svg-title-3 chart-svg-desc-3">
+                <title id="chart-svg-title-3">Série temporal de clima da estufa</title><desc id="chart-svg-desc-3">Valores fictícios para demonstrar variações em sete dias. A escala da esquerda é temperatura em graus Celsius; a da direita é umidade relativa em porcentagem.</desc>
+                <g stroke="#34483d" stroke-width="1"><path d="M45 25H685M45 65H685M45 105H685M45 145H685M45 185H685"/></g>
+                <g fill="#a8b8ac" font-size="10" font-family="system-ui"><text x="4" y="28">32°</text><text x="4" y="68">28°</text><text x="4" y="108">24°</text><text x="4" y="148">20°</text><text x="4" y="188">16°</text><text x="47" y="202">Seg</text><text x="150" y="202">Ter</text><text x="255" y="202">Qua</text><text x="360" y="202">Qui</text><text x="465" y="202">Sex</text><text x="570" y="202">Sáb</text><text x="665" y="202">Dom</text></g>
+                <g fill="#78b6d0" font-size="10" font-family="system-ui"><text x="690" y="28">100%</text><text x="690" y="68">80%</text><text x="690" y="108">60%</text><text x="690" y="148">40%</text><text x="690" y="188">20%</text></g>
+                <path d="M50 109 C93 94 111 110 151 83 S215 75 258 92 S324 55 365 68 S430 95 470 61 S535 72 578 50 S640 74 680 48" fill="none" stroke="#83c797" stroke-width="3" stroke-linecap="round"/>
+                <path d="M50 141 C89 134 111 149 151 126 S215 132 258 114 S323 126 365 101 S428 121 470 107 S535 117 578 90 S640 102 680 81" fill="none" stroke="#78b6d0" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="680" cy="48" r="4" fill="#83c797"/><circle cx="680" cy="81" r="4" fill="#78b6d0"/>
+              </svg>
+            </div>
+            <div class="chart-legend" aria-hidden="true"><span class="legend-item"><i class="legend-line"></i>Temperatura (°C)</span><span class="legend-item"><i class="legend-line humidity"></i>Umidade (%)</span></div>
+            <details class="chart-data"><summary>Consultar exemplo de leituras em tabela</summary><p>Valores demonstrativos — não representam medições reais.</p><table><thead><tr><th scope="col">Horário</th><th scope="col">Temperatura</th><th scope="col">Umidade</th></tr></thead><tbody><tr><th scope="row">08:00</th><td>26,8 °C</td><td>68 %</td></tr><tr><th scope="row">09:00</th><td>27,4 °C</td><td>71 %</td></tr></tbody></table></details>
+          </section>
+          <section class="card section-card" aria-labelledby="limits-title-3">
+            <div class="section-heading"><div><h2 id="limits-title-3">CONFIGURAÇÃO DE LIMITES</h2><p>Definidos pelo operador</p></div></div>
+            <div class="limits-panel"><div><strong>Faixas monitoradas</strong><p>Temperatura e umidade do ar</p></div><button type="button" class="quiet-button" data-open-settings>Editar faixas</button></div>
+            <p class="footnote">Leitura horária · histórico de até 12 meses · alertas no sistema web.</p>
+          </section>
+        </div>
+        <p class="footnote">Conceito de central operacional: status e exceções em primeiro plano. Este protótipo usa somente dados simulados.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="dialog-title">
+    <form method="dialog" class="dialog-content" id="settings-form">
+      <div class="dialog-header"><div><h2 id="dialog-title">Limites de alerta</h2><p>Configure as faixas que deseja acompanhar. Estas configurações não são recomendações agronômicas.</p></div><button type="button" class="close-button" aria-label="Fechar" data-close-dialog>×</button></div>
+      <div class="limit-fields">
+        <fieldset class="field-group"><legend>Temperatura do ar (°C)</legend><div class="field-row"><label for="temp-min">Mínimo<input id="temp-min" name="temp-min" type="number" step="0.1" value="18" aria-describedby="form-error" required></label><label for="temp-max">Máximo<input id="temp-max" name="temp-max" type="number" step="0.1" value="30" aria-describedby="form-error" required></label></div></fieldset>
+        <fieldset class="field-group"><legend>Umidade relativa (%)</legend><div class="field-row"><label for="humidity-min">Mínimo<input id="humidity-min" name="humidity-min" type="number" min="0" max="100" step="1" value="50" aria-describedby="form-error" required></label><label for="humidity-max">Máximo<input id="humidity-max" name="humidity-max" type="number" min="0" max="100" step="1" value="70" aria-describedby="form-error" required></label></div></fieldset>
+      </div>
+      <p class="form-error" id="form-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" class="quiet-button" data-close-dialog>Cancelar</button><button type="submit" class="primary-button">Salvar limites</button></div>
+    </form>
+  </dialog>
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    (() => {
+      const tabs = [...document.querySelectorAll(".picker-tabs button")];
+      const concepts = [...document.querySelectorAll(".prototype")];
+      const dialog = document.querySelector("#settings-dialog");
+      const form = document.querySelector("#settings-form");
+      const error = document.querySelector("#form-error");
+      const toast = document.querySelector(".toast");
+      const readings = { temperature: 27.4, humidity: 71 };
+      const labels = { temperature: "Temperatura do ar", humidity: "Umidade do ar" };
+      let toastTimer;
+
+      function selectConcept(index) {
+        tabs.forEach((tab, i) => tab.setAttribute("aria-pressed", String(i === index)));
+        concepts.forEach((concept, i) => { concept.hidden = i !== index; });
+        tabs[index].focus();
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => selectConcept(index));
+        tab.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            const delta = event.key === "ArrowRight" ? 1 : -1;
+            selectConcept((index + delta + tabs.length) % tabs.length);
+          }
+        });
+      });
+
+      document.querySelectorAll(".period-tabs button").forEach((button) => {
+        button.addEventListener("click", () => {
+          const group = button.closest(".period-tabs");
+          group.querySelectorAll("button").forEach((sibling) => sibling.setAttribute("aria-pressed", String(sibling === button)));
+          const chart = group.closest("section").querySelector("[data-chart]");
+          const period = button.textContent.trim();
+          const labelsByPeriod = {
+            "24h": ["00h", "04h", "08h", "12h", "16h", "20h", "24h"],
+            "7d": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+            "30d": ["01", "05", "10", "15", "20", "25", "30"],
+            "90d": ["01", "15", "30", "45", "60", "75", "90"],
+            "1 ano": ["Jan", "Mar", "Mai", "Jul", "Set", "Nov", "Dez"],
+          };
+          const axisLabels = [...chart.querySelectorAll("g text")].filter((label) => label.getAttribute("y") === "202");
+          axisLabels.forEach((label, index) => { label.textContent = labelsByPeriod[period][index]; });
+          chart.setAttribute("aria-label", `Gráfico demonstrativo de temperatura e umidade no período de ${period}`);
+          chart.querySelector("desc").textContent = `Linhas simuladas representando temperatura e umidade ao longo de ${period}. A escala da esquerda é temperatura em graus Celsius; a da direita é umidade relativa em porcentagem.`;
+        });
+      });
+
+      document.querySelectorAll("[data-open-settings]").forEach((button) => button.addEventListener("click", () => {
+        error.textContent = "";
+        dialog.showModal();
+        document.querySelector("#temp-min").focus();
+      }));
+      document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => dialog.close()));
+      dialog.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          dialog.close();
+        }
+      });
+
+      function formatNumber(value) {
+        return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(".", ",");
+      }
+      function showToast(message) {
+        toast.textContent = message;
+        toast.hidden = false;
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => { toast.hidden = true; }, 3600);
+      }
+      function updateMeasure(key, min, max, unit) {
+        const value = readings[key];
+        const outside = value < min || value > max;
+        document.querySelectorAll(`[data-limits="${key}"]`).forEach((element) => {
+          element.textContent = `${formatNumber(min)}–${formatNumber(max)} ${unit}`;
+        });
+        document.querySelectorAll(`[data-status="${key}"]`).forEach((element) => {
+          element.textContent = outside ? (value < min ? "Abaixo do limite" : "Acima do limite") : "Dentro da faixa";
+          element.classList.toggle("status-ok", !outside);
+        });
+      }
+      function refreshAlert() {
+        const active = ["temperature", "humidity"].filter((key) =>
+          [...document.querySelectorAll(`[data-status="${key}"]`)].some((item) => !item.classList.contains("status-ok"))
+        );
+        const messages = active.map((key) => {
+          const value = readings[key];
+          const min = Number(form.elements[key === "temperature" ? "temp-min" : "humidity-min"].value);
+          const max = Number(form.elements[key === "temperature" ? "temp-max" : "humidity-max"].value);
+          const boundary = value < min ? min : max;
+          const direction = value < min ? "abaixo do mínimo" : "acima do máximo";
+          const unit = key === "temperature" ? "°C" : "%";
+          return `${labels[key]}: ${formatNumber(value)}${unit}, ${direction} de ${formatNumber(boundary)}${unit}`;
+        });
+        document.querySelectorAll(".prototype .alert-card").forEach((alert) => {
+          alert.hidden = messages.length === 0;
+          if (messages.length) {
+            alert.querySelector("h2").textContent = `${active.map((key) => labels[key]).join(" e ")} fora dos limites configurados`;
+            alert.querySelector("p").textContent = `${messages.join(". ")}. Medição demonstrativa das 09:00.`;
+          }
+        });
+        const recentRow = document.querySelector("#concept-2 .recent-row");
+        if (recentRow) {
+          recentRow.querySelector("span:first-child").textContent = `09:00 · ${active.length ? messages.join("; ") : "Nenhum alerta ativo"}`;
+          recentRow.querySelector("span:last-child").textContent = active.length ? "Ativo" : "Normal";
+        }
+      }
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const tempMin = Number(form.elements["temp-min"].value);
+        const tempMax = Number(form.elements["temp-max"].value);
+        const humidityMin = Number(form.elements["humidity-min"].value);
+        const humidityMax = Number(form.elements["humidity-max"].value);
+        if (![tempMin, tempMax, humidityMin, humidityMax].every(Number.isFinite) ||
+            tempMin >= tempMax || humidityMin >= humidityMax || humidityMin < 0 || humidityMax > 100) {
+          error.textContent = "Informe limites válidos: o mínimo deve ser menor que o máximo; umidade entre 0% e 100%.";
+          return;
+        }
+        updateMeasure("temperature", tempMin, tempMax, "°C");
+        updateMeasure("humidity", humidityMin, humidityMax, "%");
+        refreshAlert();
+        dialog.close();
+        showToast("Limites atualizados neste protótipo.");
+      });
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    })();
+  </script>
+</body>
+</html>
